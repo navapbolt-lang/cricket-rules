@@ -58,34 +58,62 @@ async def lifespan(app: FastAPI):
 
     embedding_client = EmbeddingClient()
 
-    # VectorStore (Qdrant) - optional, lazy connection
-    vector_store = VectorStore()
+    # All RAG services - lazy initialization (setup on first request)
+    vector_store = None
     retriever = None
     re_ranker = None
     agent = None
     chat_service = None
+    usage_service = None
+    partner_service = None
 
-    try:
-        retriever = HybridRetriever(vector_store, embedding_client)
-        re_ranker = ReRanker()
-        # Don't pre-load reranker at startup to save memory on free tier
-        # re_ranker._load_model()
+    def init_rag_services():
+        nonlocal \
+            vector_store, \
+            retriever, \
+            re_ranker, \
+            agent, \
+            chat_service, \
+            usage_service, \
+            partner_service
+        if chat_service is not None:
+            return  # Already initialized
 
-        tools = CricketTools(retriever, vector_store)
-        agent = Agent(tools)
+        try:
+            from app.rag.vector_store import VectorStore
+            from app.rag.retriever import HybridRetriever
+            from app.rag.re_ranker import ReRanker
+            from app.agent.tools import CricketTools
+            from app.agent.agent import Agent
+            from app.services.chat_service import ChatService
+            from app.services.partner_service import PartnerService
+            from app.services.usage_service import UsageService
 
-        usage_service = UsageService()
-        partner_service = PartnerService()
-        chat_service = ChatService(
-            retriever,
-            re_ranker,
-            agent,
-            usage_service=usage_service,
-            partner_service=partner_service,
-        )
-        logger.info("RAG pipeline ready (Qdrant connects on first request).")
-    except Exception as e:
-        logger.warning(f"RAG pipeline setup failed: {e}. Chat functionality disabled.")
+            vector_store = VectorStore()
+            retriever = HybridRetriever(vector_store, embedding_client)
+            re_ranker = ReRanker()
+
+            tools = CricketTools(retriever, vector_store)
+            agent = Agent(tools)
+
+            usage_service = UsageService()
+            partner_service = PartnerService()
+            chat_service = ChatService(
+                retriever,
+                re_ranker,
+                agent,
+                usage_service=usage_service,
+                partner_service=partner_service,
+            )
+            logger.info("RAG services initialized.")
+        except Exception as e:
+            logger.warning(f"RAG init failed: {e}")
+
+    # Store init function for lazy loading
+    app.state.init_rag = init_rag_services
+    app.state.chat_service = None  # Will be set on first request
+
+    logger.info("Fast startup complete. RAG services will initialize on first request.")
 
     # Redis - optional
     redis_client = None
@@ -113,15 +141,8 @@ async def lifespan(app: FastAPI):
     app.state.retriever = retriever
     app.state.re_ranker = re_ranker
     app.state.agent = agent
-    app.state.chat_service = chat_service
-    app.state.partner_service = partner_service if chat_service else None
-    app.state.usage_service = usage_service if chat_service else None
-
-    if MONITORING_AVAILABLE and CHUNK_COUNT and vector_store:
-        try:
-            CHUNK_COUNT.set(vector_store.count())
-        except Exception:
-            pass
+    app.state.partner_service = partner_service
+    app.state.usage_service = usage_service
 
     logger.info("All services successfully initialized on startup.")
 
