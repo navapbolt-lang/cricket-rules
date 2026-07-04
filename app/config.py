@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     web_search_enabled: bool = True
     llm_provider: str = "groq"
     llm_model: str = "llama-3.3-70b-versatile"
-    embedding_model: str = "all-MiniLM-L6-v2"
+    embedding_model: str = "paraphrase-MiniLM-L3-v2"
 
     vector_db_type: str = "qdrant"
     qdrant_url: str = "http://localhost:6333"

@@ -79,7 +79,8 @@ async def lifespan(app: FastAPI):
 
     retriever = HybridRetriever(vector_store, embedding_client)
     re_ranker = ReRanker()
-    re_ranker._load_model()  # Pre-warm: download & load model at startup
+    # Don't pre-load reranker at startup to save memory on free tier
+    # re_ranker._load_model()
 
     tools = CricketTools(retriever, vector_store)
     agent = Agent(tools)
