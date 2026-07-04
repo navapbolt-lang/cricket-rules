@@ -1,23 +1,30 @@
-from sentence_transformers import SentenceTransformer
+"""Embedding client using Gemini API (no local model needed)."""
+
 from app.config import settings
 
 
-_models: dict[str, SentenceTransformer] = {}
-
-
-def _get_model() -> SentenceTransformer:
-    if settings.embedding_model not in _models:
-        _models[settings.embedding_model] = SentenceTransformer(settings.embedding_model)
-    return _models[settings.embedding_model]
-
-
 class EmbeddingClient:
+    """Embedding client using Gemini API for embeddings."""
+
     def __init__(self):
-        self._model = _get_model()
-        self._dim = self._model.get_sentence_embedding_dimension()
+        self._dim = 768  # Gemini embedding dimension
 
     def embed(self, text: str) -> list[float]:
-        return self._model.encode(text).tolist()
+        """Get embedding for a single text."""
+        try:
+            import google.generativeai as genai
+
+            genai.configure(api_key=settings.gemini_api_key)
+            result = genai.embed_content(
+                model="models/text-embedding-004",
+                content=text,
+            )
+            return result["embedding"]
+        except Exception as e:
+            # Fallback: return zero vector (will degrade search quality)
+            print(f"Embedding API failed: {e}")
+            return [0.0] * self._dim
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        return self._model.encode(texts, show_progress_bar=False).tolist()
+        """Get embeddings for multiple texts."""
+        return [self.embed(text) for text in texts]
