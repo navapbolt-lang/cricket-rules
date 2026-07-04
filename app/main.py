@@ -59,9 +59,23 @@ async def lifespan(app: FastAPI):
     embedding_client = EmbeddingClient()
     vector_store = VectorStore()
 
-    redis_client = aioredis.from_url(settings.redis_url, decode_responses=True)
-    db_engine = create_async_engine(settings.database_url, echo=False)
-    db_sessionmaker = async_sessionmaker(db_engine, expire_on_commit=False)
+    # Redis - optional
+    redis_client = None
+    try:
+        redis_client = aioredis.from_url(settings.redis_url, decode_responses=True)
+        logger.info("Redis connected.")
+    except Exception as e:
+        logger.warning(f"Redis not available: {e}")
+
+    # PostgreSQL - optional
+    db_engine = None
+    db_sessionmaker = None
+    try:
+        db_engine = create_async_engine(settings.database_url, echo=False)
+        db_sessionmaker = async_sessionmaker(db_engine, expire_on_commit=False)
+        logger.info("PostgreSQL connected.")
+    except Exception as e:
+        logger.warning(f"PostgreSQL not available: {e}")
 
     retriever = HybridRetriever(vector_store, embedding_client)
     re_ranker = ReRanker()

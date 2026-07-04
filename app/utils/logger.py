@@ -7,7 +7,6 @@ from app.config import settings
 
 def setup_logging():
     """Configure structured logging with console and JSON support."""
-    from pathlib import Path
     logger.remove()
 
     log_format = (
@@ -16,7 +15,6 @@ def setup_logging():
         "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
         "<level>{message}</level>"
     )
-    file_format = "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}"
 
     logger.add(
         sys.stderr,
@@ -27,20 +25,36 @@ def setup_logging():
         diagnose=True,
     )
 
-    log_dir = Path(__file__).resolve().parent.parent.parent / "logs"
-    log_dir.mkdir(exist_ok=True)
-    logger.add(
-        str(log_dir / "cricket-bot.log"),
-        format=file_format,
-        level="DEBUG",
-        rotation="10 MB",
-        retention=3,
-        compression="gz",
-        backtrace=True,
-        diagnose=True,
-    )
+    # Try to add file logging (optional - works locally, may fail on cloud)
+    try:
+        from pathlib import Path
+        import tempfile
 
-    logger.info(f"Logging initialized (level={settings.log_level}, file={log_dir / 'cricket-bot.log'})")
+        # Use /tmp on cloud, local logs/ dir otherwise
+        log_dir = (
+            Path(tempfile.gettempdir()) if not Path("logs").exists() else Path("logs")
+        )
+        log_dir.mkdir(exist_ok=True)
+
+        file_format = "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}"
+        logger.add(
+            str(log_dir / "cricket-bot.log"),
+            format=file_format,
+            level="DEBUG",
+            rotation="10 MB",
+            retention=3,
+            compression="gz",
+            backtrace=True,
+            diagnose=True,
+        )
+        logger.info(
+            f"Logging initialized (level={settings.log_level}, file={log_dir / 'cricket-bot.log'})"
+        )
+    except Exception as e:
+        logger.info(
+            f"Logging initialized (level={settings.log_level}, console only - file logging failed: {e})"
+        )
+
     return logger
 
 
@@ -49,22 +63,38 @@ def get_logger(name: str):
     return logger.bind(service=name)
 
 
-def log_query_event(partner_id: str, query: str, format_used: str, latency_ms: float, guardrail_status: str):
+def log_query_event(
+    partner_id: str,
+    query: str,
+    format_used: str,
+    latency_ms: float,
+    guardrail_status: str,
+):
     """Log a structured query event for analytics."""
-    logger.bind(event="query", partner_id=partner_id, format=format_used,
-                latency_ms=round(latency_ms, 1), guardrail=guardrail_status).info(
+    logger.bind(
+        event="query",
+        partner_id=partner_id,
+        format=format_used,
+        latency_ms=round(latency_ms, 1),
+        guardrail=guardrail_status,
+    ).info(
         f"Query | partner={partner_id} format={format_used} latency={latency_ms:.0f}ms guardrail={guardrail_status}"
     )
 
 
 def log_guardrail_failure(guardrail_name: str, reason: str, partner_id: str = ""):
     """Log a guardrail failure with context."""
-    logger.bind(event="guardrail_failure", guardrail=guardrail_name,
-                partner_id=partner_id).warning(
+    logger.bind(
+        event="guardrail_failure", guardrail=guardrail_name, partner_id=partner_id
+    ).warning(
         f"Guardrail {guardrail_name} blocked | partner={partner_id} reason={reason}"
     )
-    from app.monitoring.metrics import GUARDRAIL_FAILURES
-    GUARDRAIL_FAILURES.labels(guardrail=guardrail_name).inc()
+    try:
+        from app.monitoring.metrics import GUARDRAIL_FAILURES
+
+        GUARDRAIL_FAILURES.labels(guardrail=guardrail_name).inc()
+    except ImportError:
+        pass  # Monitoring not available
 
 
 def log_error_event(error: str, context: dict | None = None):
