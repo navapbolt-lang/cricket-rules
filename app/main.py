@@ -97,6 +97,13 @@ async def lifespan(app: FastAPI):
                 usage_service=usage_service,
                 partner_service=partner_service,
             )
+            app.state.chat_service = chat_service
+            app.state.vector_store = vector_store
+            app.state.retriever = retriever
+            app.state.re_ranker = re_ranker
+            app.state.agent = agent
+            app.state.partner_service = partner_service
+            app.state.usage_service = usage_service
             logger.info("RAG services initialized.")
         except Exception as e:
             logger.warning(f"RAG init failed: {e}")
