@@ -28,6 +28,11 @@ RUN mkdir -p /app/frontend/widget && chown -R appuser:appuser /app/frontend
 
 EXPOSE 8000
 
+# Set HuggingFace cache to writable temp directory
+ENV HF_HOME=/tmp/hf_cache
+ENV SENTENCE_TRANSFORMERS_HOME=/tmp/hf_cache
+ENV TRANSFORMERS_CACHE=/tmp/hf_cache
+
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')" || exit 1
 
