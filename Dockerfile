@@ -17,8 +17,10 @@ WORKDIR /app
 
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
 
-COPY --from=builder /root/.local /root/.local
-ENV PATH=/root/.local/bin:$PATH
+# Copy packages to appuser's home directory
+COPY --from=builder /root/.local /home/appuser/.local
+ENV PATH=/home/appuser/.local/bin:$PATH
+ENV HOME=/home/appuser
 
 COPY --chown=appuser:appuser . .
 
