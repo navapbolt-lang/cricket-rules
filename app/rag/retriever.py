@@ -50,6 +50,7 @@ class HybridRetriever:
         Returns:
             List of LawChunks sorted by relevance
         """
+        self.vs._ensure_connected()
         qdrant_filter = self._build_filter(filters)
 
         vector_results = self._vector_search(query, qdrant_filter, top_k * 2)

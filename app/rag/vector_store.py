@@ -23,11 +23,22 @@ class VectorStore:
     """Qdrant vector store wrapper."""
 
     def __init__(self):
+        self.client = None
+        self._initialized = False
+
+    def _ensure_connected(self):
+        """Connect to Qdrant on first use."""
+        if self._initialized:
+            return
+        from app.config import settings
+
         self.client = QdrantClient(
             url=settings.qdrant_url,
             api_key=settings.qdrant_api_key or None,
+            timeout=30,
         )
         self._ensure_collection()
+        self._initialized = True
 
     def _ensure_collection(self):
         """Create Qdrant collection and create payload indexes if it does not exist."""
@@ -45,6 +56,7 @@ class VectorStore:
 
     def upsert(self, chunks: list[LawChunk]) -> int:
         """Upsert chunks with embeddings and metadata."""
+        self._ensure_connected()
         points = []
         for chunk in chunks:
             if not chunk.embedding:
@@ -65,6 +77,7 @@ class VectorStore:
 
     def delete_by_law(self, law_number: str):
         """Remove old version of a law."""
+        self._ensure_connected()
         self.client.delete(
             collection_name=COLLECTION_NAME,
             points_selector=Filter(
@@ -78,6 +91,7 @@ class VectorStore:
 
     def delete_by_year(self, authority: str, year: int):
         """Remove old chunks by authority and year."""
+        self._ensure_connected()
         self.client.delete(
             collection_name=COLLECTION_NAME,
             points_selector=Filter(
@@ -92,6 +106,7 @@ class VectorStore:
 
     def count(self) -> int:
         """Return chunk count in the collection."""
+        self._ensure_connected()
         try:
             return self.client.count(COLLECTION_NAME).count
         except Exception:
@@ -99,6 +114,7 @@ class VectorStore:
 
     def health(self) -> bool:
         """Check connection health."""
+        self._ensure_connected()
         try:
             self.client.get_collections()
             return True

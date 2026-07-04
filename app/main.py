@@ -58,15 +58,14 @@ async def lifespan(app: FastAPI):
 
     embedding_client = EmbeddingClient()
 
-    # VectorStore (Qdrant) - optional
-    vector_store = None
+    # VectorStore (Qdrant) - optional, lazy connection
+    vector_store = VectorStore()
     retriever = None
     re_ranker = None
     agent = None
     chat_service = None
 
     try:
-        vector_store = VectorStore()
         retriever = HybridRetriever(vector_store, embedding_client)
         re_ranker = ReRanker()
         # Don't pre-load reranker at startup to save memory on free tier
@@ -84,9 +83,9 @@ async def lifespan(app: FastAPI):
             usage_service=usage_service,
             partner_service=partner_service,
         )
-        logger.info("Qdrant + RAG pipeline initialized.")
+        logger.info("RAG pipeline ready (Qdrant connects on first request).")
     except Exception as e:
-        logger.warning(f"VectorStore not available: {e}. Chat functionality disabled.")
+        logger.warning(f"RAG pipeline setup failed: {e}. Chat functionality disabled.")
 
     # Redis - optional
     redis_client = None
