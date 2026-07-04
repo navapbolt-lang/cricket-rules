@@ -57,7 +57,36 @@ async def lifespan(app: FastAPI):
             pass
 
     embedding_client = EmbeddingClient()
-    vector_store = VectorStore()
+
+    # VectorStore (Qdrant) - optional
+    vector_store = None
+    retriever = None
+    re_ranker = None
+    agent = None
+    chat_service = None
+
+    try:
+        vector_store = VectorStore()
+        retriever = HybridRetriever(vector_store, embedding_client)
+        re_ranker = ReRanker()
+        # Don't pre-load reranker at startup to save memory on free tier
+        # re_ranker._load_model()
+
+        tools = CricketTools(retriever, vector_store)
+        agent = Agent(tools)
+
+        usage_service = UsageService()
+        partner_service = PartnerService()
+        chat_service = ChatService(
+            retriever,
+            re_ranker,
+            agent,
+            usage_service=usage_service,
+            partner_service=partner_service,
+        )
+        logger.info("Qdrant + RAG pipeline initialized.")
+    except Exception as e:
+        logger.warning(f"VectorStore not available: {e}. Chat functionality disabled.")
 
     # Redis - optional
     redis_client = None
@@ -77,24 +106,6 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"PostgreSQL not available: {e}")
 
-    retriever = HybridRetriever(vector_store, embedding_client)
-    re_ranker = ReRanker()
-    # Don't pre-load reranker at startup to save memory on free tier
-    # re_ranker._load_model()
-
-    tools = CricketTools(retriever, vector_store)
-    agent = Agent(tools)
-
-    usage_service = UsageService()
-    partner_service = PartnerService()
-    chat_service = ChatService(
-        retriever,
-        re_ranker,
-        agent,
-        usage_service=usage_service,
-        partner_service=partner_service,
-    )
-
     app.state.embedding_client = embedding_client
     app.state.vector_store = vector_store
     app.state.redis = redis_client
@@ -104,10 +115,10 @@ async def lifespan(app: FastAPI):
     app.state.re_ranker = re_ranker
     app.state.agent = agent
     app.state.chat_service = chat_service
-    app.state.partner_service = partner_service
-    app.state.usage_service = usage_service
+    app.state.partner_service = partner_service if chat_service else None
+    app.state.usage_service = usage_service if chat_service else None
 
-    if MONITORING_AVAILABLE and CHUNK_COUNT:
+    if MONITORING_AVAILABLE and CHUNK_COUNT and vector_store:
         try:
             CHUNK_COUNT.set(vector_store.count())
         except Exception:
