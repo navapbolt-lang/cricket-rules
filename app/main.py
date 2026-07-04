@@ -28,8 +28,21 @@ from app.services.partner_service import PartnerService
 from app.services.usage_service import UsageService
 from app.api.middleware import CORSMiddleware, LoggingMiddleware
 from app.api.stats_routes import router as stats_router
-from app.monitoring.metrics import PrometheusMiddleware, metrics_endpoint
-from app.monitoring.error_tracker import init_error_tracker
+
+# Optional monitoring imports
+try:
+    from app.monitoring.metrics import (
+        PrometheusMiddleware,
+        metrics_endpoint,
+        CHUNK_COUNT,
+    )
+    from app.monitoring.error_tracker import init_error_tracker
+
+    MONITORING_AVAILABLE = True
+except ImportError:
+    MONITORING_AVAILABLE = False
+    metrics_endpoint = None
+    CHUNK_COUNT = None
 
 
 @asynccontextmanager
@@ -37,7 +50,11 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown lifecycle."""
     setup_logging()
 
-    init_error_tracker(environment=os.getenv("ENVIRONMENT", "production"))
+    if MONITORING_AVAILABLE:
+        try:
+            init_error_tracker(environment=os.getenv("ENVIRONMENT", "production"))
+        except Exception:
+            pass
 
     embedding_client = EmbeddingClient()
     vector_store = VectorStore()
@@ -75,9 +92,11 @@ async def lifespan(app: FastAPI):
     app.state.partner_service = partner_service
     app.state.usage_service = usage_service
 
-    from app.monitoring.metrics import CHUNK_COUNT
-
-    CHUNK_COUNT.set(vector_store.count())
+    if MONITORING_AVAILABLE and CHUNK_COUNT:
+        try:
+            CHUNK_COUNT.set(vector_store.count())
+        except Exception:
+            pass
 
     logger.info("All services successfully initialized on startup.")
 
@@ -105,10 +124,14 @@ app = FastAPI(
 
 app.add_middleware(CORSMiddleware)
 app.add_middleware(LoggingMiddleware)
-app.add_middleware(PrometheusMiddleware)
+
+if MONITORING_AVAILABLE:
+    try:
+        app.add_middleware(PrometheusMiddleware)
+        app.add_route("/metrics", metrics_endpoint, include_in_schema=False)
+    except Exception:
+        pass
 
 app.include_router(router)
 app.include_router(widget_router)
 app.include_router(stats_router)
-
-app.add_route("/metrics", metrics_endpoint, include_in_schema=False)
