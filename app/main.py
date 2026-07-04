@@ -16,16 +16,6 @@ from app.api.routes import router
 from app.api.widget_routes import router as widget_router
 from app.utils.logger import setup_logging
 from app.config import settings
-
-from app.rag.embeddings import EmbeddingClient
-from app.rag.vector_store import VectorStore
-from app.rag.retriever import HybridRetriever
-from app.rag.re_ranker import ReRanker
-from app.agent.tools import CricketTools
-from app.agent.agent import Agent
-from app.services.chat_service import ChatService
-from app.services.partner_service import PartnerService
-from app.services.usage_service import UsageService
 from app.api.middleware import CORSMiddleware, LoggingMiddleware
 from app.api.stats_routes import router as stats_router
 
@@ -56,9 +46,8 @@ async def lifespan(app: FastAPI):
         except Exception:
             pass
 
-    embedding_client = EmbeddingClient()
-
     # All RAG services - lazy initialization (setup on first request)
+    embedding_client = None
     vector_store = None
     retriever = None
     re_ranker = None
@@ -69,6 +58,7 @@ async def lifespan(app: FastAPI):
 
     def init_rag_services():
         nonlocal \
+            embedding_client, \
             vector_store, \
             retriever, \
             re_ranker, \
@@ -80,6 +70,7 @@ async def lifespan(app: FastAPI):
             return  # Already initialized
 
         try:
+            from app.rag.embeddings import EmbeddingClient
             from app.rag.vector_store import VectorStore
             from app.rag.retriever import HybridRetriever
             from app.rag.re_ranker import ReRanker
@@ -89,6 +80,7 @@ async def lifespan(app: FastAPI):
             from app.services.partner_service import PartnerService
             from app.services.usage_service import UsageService
 
+            embedding_client = EmbeddingClient()
             vector_store = VectorStore()
             retriever = HybridRetriever(vector_store, embedding_client)
             re_ranker = ReRanker()
