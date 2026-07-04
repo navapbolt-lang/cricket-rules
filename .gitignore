@@ -1,0 +1,60 @@
+# Environment variables (SECRETS)
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+venv*/
+.venv/
+.pytest_cache/
+
+# Qdrant
+qdrant_storage/
+qdrant-data/
+qdrant.exe
+qdrant.zip
+.qdrant-initialized
+storage/
+snapshots/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# Testing
+htmlcov/
+.coverage
+
+# Local scripts
+start.bat
+stop.bat
+run_ingest.bat
+test_ports.py
+monitor_ingest.py
+
+# Data (large files)
+data/pdfs/
+
+# Monitoring
+monitoring/

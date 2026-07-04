@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CricketGPT — Live Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f1f5f9; color: #0f172a; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* Top Banner */
+    .top-banner { background: #0f172a; color: #fff; padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 8px rgba(0,0,0,0.2); }
+    .top-banner .logo { display: flex; align-items: center; gap: 10px; }
+    .top-banner .logo-icon { font-size: 28px; }
+    .top-banner .logo-text { font-size: 19px; font-weight: 700; letter-spacing: -0.3px; }
+    .top-banner .nav { display: flex; gap: 20px; align-items: center; }
+    .top-banner .nav a { font-size: 13px; opacity: 0.7; cursor: pointer; transition: opacity 0.2s; text-decoration: none; color: #fff; }
+    .top-banner .nav a:hover, .top-banner .nav a.active { opacity: 1; }
+    .top-banner .nav a.active { font-weight: 600; }
+    .top-banner .try-btn { background: #10b981; color: #fff; border: none; padding: 7px 18px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+    .top-banner .try-btn:hover { background: #059669; box-shadow: 0 2px 8px rgba(16,185,129,0.4); }
+
+    /* Main Layout */
+    .main-layout { display: flex; flex: 1; overflow: hidden; }
+
+    /* Left Sidebar */
+    .left-sidebar { width: 250px; background: #fff; border-right: 1px solid #e2e8f0; padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+    .sidebar-section { margin-bottom: 4px; }
+    .sidebar-title { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+    .sidebar-card { background: #f8fafc; border-radius: 10px; padding: 14px; border: 1px solid #e2e8f0; }
+    .sidebar-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #0f172a; }
+    .sidebar-card p { font-size: 12px; color: #64748b; line-height: 1.5; }
+    .stat-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+    .stat-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+    .stat-icon.green { background: #ecfdf5; }
+    .stat-icon.blue { background: #eff6ff; }
+    .stat-icon.purple { background: #faf5ff; }
+    .stat-text { font-size: 12px; color: #64748b; }
+    .stat-text strong { color: #0f172a; font-size: 14px; display: block; }
+
+    /* Center Chat Area */
+    .center-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .chat-container { width: 100%; max-width: 700px; height: calc(100vh - 140px); background: #fff; border-radius: 16px; box-shadow: 0 1px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03); display: flex; flex-direction: column; overflow: hidden; }
+    .chat-header { background: #0f172a; color: #fff; padding: 14px 18px; display: flex; align-items: center; gap: 10px; }
+    .chat-header-avatar { width: 34px; height: 34px; background: rgba(16,185,129,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .chat-header-info h3 { font-size: 14px; font-weight: 600; }
+    .chat-header-info p { font-size: 11px; opacity: 0.6; }
+    .chat-header .online-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; margin-left: auto; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .msg { display: flex; gap: 8px; max-width: 82%; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .msg-user { align-self: flex-end; flex-direction: row-reverse; }
+    .msg-bot { align-self: flex-start; }
+    .msg-avatar { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+    .msg-bot .msg-avatar { background: #ecfdf5; }
+    .msg-user .msg-avatar { background: #0f172a; }
+    .msg-bubble { padding: 10px 14px; border-radius: 12px; font-size: 13.5px; line-height: 1.55; word-wrap: break-word; position: relative; }
+    .msg-user .msg-bubble { background: #0f172a; color: #fff; border-bottom-right-radius: 4px; }
+    .msg-bot .msg-bubble { background: #fff; border-bottom-left-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; }
+    .msg-bubble p { margin: 0; }
+    .msg-bubble p + p { margin-top: 6px; }
+
+    /* Copy button */
+    .copy-btn { position: absolute; top: 6px; right: 6px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 5px; padding: 3px 7px; font-size: 11px; cursor: pointer; color: #94a3b8; opacity: 0; transition: all 0.15s; display: flex; align-items: center; gap: 3px; }
+    .msg-bubble:hover .copy-btn { opacity: 1; }
+    .copy-btn:hover { background: #e2e8f0; color: #0f172a; }
+    .copy-btn.copied { color: #10b981; border-color: #10b981; }
+
+    /* Suggested follow-ups */
+    .follow-ups { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9; }
+    .follow-up-btn { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 16px; padding: 5px 12px; font-size: 11.5px; cursor: pointer; color: #475569; transition: all 0.15s; }
+    .follow-up-btn:hover { background: #ecfdf5; border-color: #10b981; color: #059669; }
+
+    /* Toggle switch */
+    #web-search-toggle:checked + #toggle-slider { background: #10b981; }
+    #web-search-toggle:checked + #toggle-slider::before { transform: translateX(16px); }
+    #toggle-slider::before { content: ''; position: absolute; height: 16px; width: 16px; left: 2px; bottom: 2px; background: #fff; border-radius: 50%; transition: 0.3s; }
+    #toggle-slider { border-radius: 20px; }
+
+    /* Feedback */
+    .feedback-row { display: flex; gap: 5px; margin-top: 8px; }
+    .feedback-btn { background: none; border: 1px solid #e2e8f0; border-radius: 6px; padding: 3px 9px; font-size: 12px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 4px; color: #94a3b8; }
+    .feedback-btn:hover { border-color: #0f172a; color: #0f172a; }
+    .feedback-btn.active-up { border-color: #10b981; color: #10b981; background: #ecfdf5; }
+    .feedback-btn.active-down { border-color: #ef4444; color: #ef4444; background: #fef2f2; }
+    .feedback-btn:disabled { opacity: 0.4; cursor: default; }
+
+    /* Typing */
+    .typing-dots { display: flex; gap: 4px; align-items: center; padding: 12px 16px; }
+    .typing-dot { width: 7px; height: 7px; background: #cbd5e1; border-radius: 50%; animation: bounce 1.4s ease-in-out both; }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+    /* Chat Input */
+    .chat-input-area { padding: 12px 14px; background: #fff; border-top: 1px solid #e2e8f0; }
+    .input-row { display: flex; gap: 8px; align-items: center; }
+    .input-row input { flex: 1; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 13.5px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; background: #f8fafc; }
+    .input-row input:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); background: #fff; }
+    .send-btn { width: 40px; height: 40px; border-radius: 50%; background: #10b981; color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+    .send-btn:hover { background: #059669; transform: scale(1.05); box-shadow: 0 2px 8px rgba(16,185,129,0.4); }
+    .send-btn:disabled { background: #cbd5e1; cursor: default; transform: none; box-shadow: none; }
+
+    /* Right Sidebar */
+    .right-sidebar { width: 250px; background: #fff; border-left: 1px solid #e2e8f0; padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+    .suggested-q { padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; color: #334155; cursor: pointer; transition: all 0.15s; text-align: left; line-height: 1.4; display: block; width: 100%; }
+    .suggested-q:hover { background: #ecfdf5; border-color: #10b981; color: #059669; }
+
+    /* Bottom Banner */
+    .bottom-banner { background: #0f172a; color: #fff; padding: 12px 32px; display: flex; align-items: center; justify-content: space-between; }
+    .bottom-banner .copy { font-size: 12px; opacity: 0.4; }
+    .bottom-banner .links { display: flex; gap: 16px; }
+    .bottom-banner .links a { color: #fff; font-size: 12px; opacity: 0.5; text-decoration: none; transition: opacity 0.2s; }
+    .bottom-banner .links a:hover { opacity: 1; }
+
+    /* Responsive */
+    @media (max-width: 1200px) { .left-sidebar, .right-sidebar { display: none; } }
+    @media (max-width: 768px) { .chat-container { height: calc(100vh - 120px); border-radius: 0; } }
+  </style>
+</head>
+<body>
+
+  <header class="top-banner">
+    <div class="logo">
+      <span class="logo-icon">🏏</span>
+      <span class="logo-text">CricketGPT</span>
+    </div>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/demo/live" class="active">Chat</a>
+      <a href="/simulator">Simulator</a>
+      <a href="/docs">API</a>
+      <a href="/demo/live" class="try-btn">Try Now</a>
+    </nav>
+  </header>
+
+  <div class="main-layout">
+    <aside class="left-sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">About</div>
+        <div class="sidebar-card">
+          <h4>CricketGPT</h4>
+          <p>AI-powered cricket rules assistant with exact citations from official ICC/MCC law books.</p>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Status</div>
+        <div class="sidebar-card" style="display:flex;align-items:center;gap:8px;">
+          <span style="width:8px;height:8px;background:#10b981;border-radius:50%;"></span>
+          <span style="font-size:12px;color:#10b981;font-weight:500;">All systems online</span>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">Settings</div>
+        <div class="sidebar-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:12px;color:#0f172a;font-weight:500;">Web Search</span>
+            <label style="position:relative;display:inline-block;width:36px;height:20px;">
+              <input type="checkbox" id="web-search-toggle" checked style="opacity:0;width:0;height:0;">
+              <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#cbd5e1;border-radius:20px;transition:0.3s;" id="toggle-slider"></span>
+            </label>
+          </div>
+          <p style="font-size:11px;color:#94a3b8;margin-top:6px;">Adds stats & records to answers</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="center-area">
+      <div class="chat-container">
+        <div class="chat-header">
+          <div class="chat-header-avatar">🤖</div>
+          <div class="chat-header-info">
+            <h3>CricketGPT</h3>
+            <p>Powered by ICC &amp; MCC official laws</p>
+          </div>
+          <div class="online-dot"></div>
+        </div>
+        <div class="chat-messages" id="cr-messages">
+          <div class="msg msg-bot">
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-bubble">
+              <p>Hi! I'm CricketGPT. Ask me anything about cricket laws — I'll answer with exact citations from official ICC/MCC rulebooks.</p>
+              <p style="margin-top:8px;font-size:12px;color:#94a3b8;">Try: "What is LBW?" or "Law 40 timed out"</p>
+              <div class="follow-ups">
+                <button class="follow-up-btn" onclick="askQuestion('What is LBW?')">What is LBW?</button>
+                <button class="follow-up-btn" onclick="askQuestion('What is a no-ball?')">No-ball rules</button>
+                <button class="follow-up-btn" onclick="askQuestion('How does DRS work?')">DRS system</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <div class="input-row">
+            <input type="text" id="cr-input" placeholder="Ask a cricket rules question..." autocomplete="off" />
+            <button id="cr-send" class="send-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <aside class="right-sidebar">
+      <div class="sidebar-title">Try These</div>
+      <button class="suggested-q" onclick="askQuestion('What is LBW?')">What is LBW?</button>
+      <button class="suggested-q" onclick="askQuestion('How does DRS work?')">How does DRS work?</button>
+      <button class="suggested-q" onclick="askQuestion('What is Law 40 timed out?')">What is Law 40 timed out?</button>
+      <button class="suggested-q" onclick="askQuestion('When is a no-ball given?')">When is a no-ball given?</button>
+      <button class="suggested-q" onclick="askQuestion('What is a wide ball?')">What is a wide ball?</button>
+      <button class="suggested-q" onclick="askQuestion('How many DRS reviews in Test?')">DRS reviews in Test?</button>
+      <button class="suggested-q" onclick="askQuestion('What is a bouncer rule?')">Bouncer rules</button>
+      <button class="suggested-q" onclick="askQuestion('What is overthrow rule?')">Overthrow rule</button>
+    </aside>
+  </div>
+
+  <footer class="bottom-banner">
+    <span class="copy">&copy; 2026 CricketGPT</span>
+    <div class="links">
+      <a href="/docs">API Docs</a>
+      <a href="#">Contact</a>
+    </div>
+  </footer>
+
+  <script>
+    const API_BASE = window.location.origin + '/api/v1';
+    const messages = document.getElementById('cr-messages');
+    const input = document.getElementById('cr-input');
+    const sendBtn = document.getElementById('cr-send');
+    let currentSessionId = 'session-' + Date.now();
+    let isStreaming = false;
+    let webSearchEnabled = true;
+
+    const SUGGESTIONS = [
+      'What is the LBW rule?',
+      'How does DRS work?',
+      'When is a no-ball given?',
+      'What is a wide ball?',
+      'How many DRS reviews in Test?',
+      'What is Law 40 timed out?',
+      'What is a bouncer rule?',
+      'What is the overthrow rule?',
+    ];
+
+    // Toggle web search
+    document.getElementById('web-search-toggle').addEventListener('change', (e) => {
+      webSearchEnabled = e.target.checked;
+    });
+
+    function askQuestion(text) {
+      input.value = text;
+      sendMessage();
+    }
+
+    function appendMessage(text, role) {
+      const div = document.createElement('div');
+      div.className = 'msg msg-' + role;
+      const avatar = document.createElement('div');
+      avatar.className = 'msg-avatar';
+      avatar.textContent = role === 'user' ? '👤' : '🤖';
+      div.appendChild(avatar);
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      const p = document.createElement('p');
+      p.textContent = text;
+      bubble.appendChild(p);
+      div.appendChild(bubble);
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+      return div;
+    }
+
+    function createStreamingBubble(id) {
+      const div = document.createElement('div');
+      div.className = 'msg msg-bot';
+      div.id = id;
+      const avatar = document.createElement('div');
+      avatar.className = 'msg-avatar';
+      avatar.textContent = '🤖';
+      div.appendChild(avatar);
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      const p = document.createElement('p');
+      p.id = id + '-text';
+      bubble.appendChild(p);
+      div.appendChild(bubble);
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+      return { div, bubble, p };
+    }
+
+    function addCopyButton(bubble) {
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.innerHTML = '📋 Copy';
+      btn.onclick = () => {
+        const text = bubble.querySelector('p')?.textContent || '';
+        navigator.clipboard.writeText(text).then(() => {
+          btn.innerHTML = '✓ Copied';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.innerHTML = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
+        });
+      };
+      bubble.appendChild(btn);
+    }
+
+    function addFollowUps(bubble) {
+      const container = document.createElement('div');
+      container.className = 'follow-ups';
+      const shuffled = SUGGESTIONS.sort(() => 0.5 - Math.random()).slice(0, 3);
+      shuffled.forEach(q => {
+        const btn = document.createElement('button');
+        btn.className = 'follow-up-btn';
+        btn.textContent = q;
+        btn.onclick = () => askQuestion(q);
+        container.appendChild(btn);
+      });
+      bubble.appendChild(container);
+    }
+
+    function addFeedbackButtons(bubble, query, answer, sessionId) {
+      const row = document.createElement('div');
+      row.className = 'feedback-row';
+      const upBtn = document.createElement('button');
+      upBtn.className = 'feedback-btn';
+      upBtn.innerHTML = '&#128077;';
+      upBtn.title = 'Helpful';
+      upBtn.onclick = () => sendFeedback('up', query, answer, sessionId, upBtn, downBtn);
+      const downBtn = document.createElement('button');
+      downBtn.className = 'feedback-btn';
+      downBtn.innerHTML = '&#128078;';
+      downBtn.title = 'Wrong';
+      downBtn.onclick = () => sendFeedback('down', query, answer, sessionId, upBtn, downBtn);
+      row.appendChild(upBtn);
+      row.appendChild(downBtn);
+      bubble.appendChild(row);
+    }
+
+    function sendFeedback(vote, query, answer, sessionId, upBtn, downBtn) {
+      upBtn.disabled = true;
+      downBtn.disabled = true;
+      fetch(API_BASE + '/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': 'test-key' },
+        body: JSON.stringify({ session_id: sessionId, query, response: answer, vote })
+      }).catch(() => {});
+      if (vote === 'up') upBtn.classList.add('active-up');
+      else downBtn.classList.add('active-down');
+    }
+
+    function showTyping() {
+      const div = document.createElement('div');
+      div.className = 'msg msg-bot';
+      div.id = 'typing-indicator';
+      const avatar = document.createElement('div');
+      avatar.className = 'msg-avatar';
+      avatar.textContent = '🤖';
+      div.appendChild(avatar);
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      bubble.innerHTML = '<div class="typing-dots"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>';
+      div.appendChild(bubble);
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function hideTyping() {
+      const el = document.getElementById('typing-indicator');
+      if (el) el.remove();
+    }
+
+    function sendMessage() {
+      const text = input.value.trim();
+      if (!text || isStreaming) return;
+      isStreaming = true;
+      sendBtn.disabled = true;
+      input.value = '';
+      appendMessage(text, 'user');
+      showTyping();
+
+      const msgId = 'bot-msg-' + Date.now();
+      let fullAnswer = '';
+
+      fetch(API_BASE + '/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': 'test-key' },
+        body: JSON.stringify({ query: text, web_search: webSearchEnabled })
+      }).then(response => {
+        if (!response.ok) throw new Error('Stream failed');
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let bubbleCreated = false;
+        let bubbleEl, textEl;
+
+        function processStream() {
+          reader.read().then(({ done, value }) => {
+            if (done) {
+              hideTyping();
+              isStreaming = false;
+              sendBtn.disabled = false;
+              input.focus();
+              if (bubbleCreated && fullAnswer) {
+                const b = bubbleEl;
+                addCopyButton(b);
+                addFollowUps(b);
+                addFeedbackButtons(b, text, fullAnswer, currentSessionId);
+                currentSessionId = 'session-' + Date.now();
+              }
+              return;
+            }
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
+            let eventType = null;
+
+            for (const line of lines) {
+              if (line.startsWith('event: ')) {
+                eventType = line.slice(7).trim();
+              } else if (line.startsWith('data: ') && eventType) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  if (eventType === 'token' && data.text) {
+                    if (!bubbleCreated) {
+                      hideTyping();
+                      const created = createStreamingBubble(msgId);
+                      bubbleEl = created.bubble;
+                      textEl = created.p;
+                      bubbleCreated = true;
+                    }
+                    fullAnswer += data.text;
+                    textEl.textContent = fullAnswer;
+                    messages.scrollTop = messages.scrollHeight;
+                  }
+                  if (eventType === 'done' && data.response) {
+                    fullAnswer = data.response.answer;
+                    if (textEl) textEl.textContent = fullAnswer;
+                  }
+                } catch (e) {}
+              }
+              eventType = null;
+            }
+            processStream();
+          });
+        }
+        processStream();
+      }).catch(() => {
+        hideTyping();
+        appendMessage('Sorry, I encountered an error. Please try again.', 'bot');
+        isStreaming = false;
+        sendBtn.disabled = false;
+        input.focus();
+      });
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+    input.focus();
+  </script>
+</body>
+</html>

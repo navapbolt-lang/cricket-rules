@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cricket Rules AI — Partner Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="login-view">
+      <div class="login-card">
+        <h2>🏏 Cricket Rules AI</h2>
+        <p style="color:#888;font-size:14px;">Partner Dashboard</p>
+        <input type="password" id="api-key-input" placeholder="Enter your API key" autofocus />
+        <button id="login-btn">Login</button>
+        <div id="login-error" class="error"></div>
+      </div>
+    </div>
+
+    <div id="dashboard-view" class="hidden">
+      <div class="dashboard-header">
+        <div>
+          <h1>🏏 Cricket Rules AI</h1>
+          <div class="subtitle" id="partner-name">Partner Dashboard</div>
+        </div>
+        <button id="logout-btn">Logout</button>
+      </div>
+
+      <div class="dashboard-container">
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card"><div class="stat-value" id="stat-queries">—</div><div class="stat-label">Queries Today</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-confidence">—</div><div class="stat-label">Avg Confidence</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-latency">—</div><div class="stat-label">Avg Latency (ms)</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-quota">—</div><div class="stat-label">Quota Remaining</div></div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="overview">Overview</button>
+          <button class="tab-btn" data-tab="embeds">Embed</button>
+          <button class="tab-btn" data-tab="queries">Top Queries</button>
+          <button class="tab-btn" data-tab="settings">Settings</button>
+        </div>
+
+        <div class="tab-content active" id="tab-overview">
+          <div class="card">
+            <h3>Queries by Format</h3>
+            <div class="format-chart" id="format-chart"></div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-embeds">
+          <div class="card">
+            <h3>Widget Embed Code</h3>
+            <p style="font-size:13px;color:#666;margin-bottom:12px;">
+              Add this script tag to your website. Customize the <code>data-*</code> attributes.
+            </p>
+            <div class="embed-box" id="embed-code"></div>
+            <button class="copy-btn" id="copy-embed-btn">Copy to Clipboard</button>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-queries">
+          <div class="card">
+            <h3>Most Asked Questions</h3>
+            <table>
+              <thead><tr><th>Question</th><th>Count</th></tr></thead>
+              <tbody id="top-queries-body"></tbody>
+            </table>
+            <div class="empty-state" id="queries-empty">No queries recorded yet.</div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-settings">
+          <div class="card">
+            <h3>Account</h3>
+            <table>
+              <tbody>
+                <tr><td style="font-weight:600;width:140px;">Partner ID</td><td id="set-partner-id">—</td></tr>
+                <tr><td style="font-weight:600;">Plan</td><td id="set-plan">—</td></tr>
+                <tr><td style="font-weight:600;">Monthly Quota</td><td id="set-quota">—</td></tr>
+              </tbody>
+            </table>
+            <p style="font-size:12px;color:#888;margin-top:12px;">
+              Need changes? Contact <a href="mailto:support@cricketrules.ai" style="color:#1a1a2e;">support@cricketrules.ai</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

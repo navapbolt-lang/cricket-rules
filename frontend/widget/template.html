@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CricketGPT — Widget Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+    .demo-header { background: #1a1a2e; color: #fff; padding: 40px 24px; text-align: center; }
+    .demo-header h1 { font-size: 28px; margin-bottom: 8px; }
+    .demo-header p { opacity: 0.8; font-size: 16px; }
+    .demo-content { max-width: 720px; margin: 0 auto; padding: 32px 24px; }
+    .demo-card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+    .demo-card h2 { font-size: 18px; margin-bottom: 8px; }
+    .demo-card p { line-height: 1.6; color: #444; margin-bottom: 8px; }
+    .demo-card code { background: #f0f2f5; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    .demo-section { margin-top: 24px; }
+    .demo-section h3 { font-size: 15px; margin-bottom: 8px; color: #555; }
+    pre { background: #1e1e2e; color: #cdd6f4; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="demo-header">
+    <h1>🏏 CricketGPT</h1>
+    <p>B2B embeddable AI chatbot — widget demo page</p>
+  </div>
+
+  <div class="demo-content">
+    <div class="demo-card">
+      <h2>Embed Instructions</h2>
+      <p>Add this single <code>&lt;script&gt;</code> tag to your page:</p>
+      <pre>&lt;script
+  src="https://your-domain.com/widget/embed.js"
+  data-partner="demo-partner"
+  data-brand-color="#1a1a2e"
+  data-logo="https://your-logo.png"
+  data-position="right"
+  data-greeting="Ask me anything about cricket rules!"
+>&lt;/script&gt;</pre>
+    </div>
+
+    <div class="demo-card">
+      <h2>Configuration Options</h2>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <tr style="border-bottom:1px solid #eee;"><th style="text-align:left;padding:6px 0;">Attribute</th><th style="text-align:left;padding:6px 0;">Default</th><th style="text-align:left;padding:6px 0;">Description</th></tr>
+        <tr><td style="padding:6px 0;"><code>data-partner</code></td><td>unknown</td><td>Partner ID for API auth</td></tr>
+        <tr><td style="padding:6px 0;"><code>data-brand-color</code></td><td>#1a1a2e</td><td>Primary brand color</td></tr>
+        <tr><td style="padding:6px 0;"><code>data-logo</code></td><td>—</td><td>Partner logo URL (header)</td></tr>
+        <tr><td style="padding:6px 0;"><code>data-position</code></td><td>right</td><td><code>right</code> or <code>left</code></td></tr>
+        <tr><td style="padding:6px 0;"><code>data-greeting</code></td><td>Ask me...</td><td>Initial bot greeting</td></tr>
+        <tr><td style="padding:6px 0;"><code>data-placeholder</code></td><td>Ask a cricket...</td><td>Input placeholder</td></tr>
+      </table>
+    </div>
+
+    <div class="demo-section">
+      <h3>Click the chat bubble icon (bottom-right) to test the widget →</h3>
+    </div>
+  </div>
+
+  <script
+    src="/widget/embed.js"
+    data-partner="test-key"
+    data-brand-color="#1a1a2e"
+    data-position="right"
+    data-api-base="http://localhost:8000/api/v1"
+    data-no-sse
+  ></script>
+</body>
+</html>

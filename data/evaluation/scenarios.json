@@ -1,0 +1,112 @@
+[
+  {
+    "id": "lbw-001",
+    "category": "lbw",
+    "difficulty": "easy",
+    "query": "Ball pitched outside leg, hit in front of middle, no bat, going on to hit top of off. What is the decision?",
+    "expected_answer": "NOT OUT — ball pitched outside leg stump. Per Law 36.1, pitching outside leg is automatic not out regardless of where the ball hits or where it's going.",
+    "expected_citations": ["36.1"],
+    "expected_verdict": "NOT OUT",
+    "format": "all"
+  },
+  {
+    "id": "lbw-002",
+    "category": "lbw",
+    "difficulty": "easy",
+    "query": "Ball pitched in line with middle and off, hits the pad in front of middle, no bat, ball would have hit middle stump. What is the decision?",
+    "expected_answer": "OUT — all conditions satisfied. Ball pitched in line (36.1), impact in front (36.2), would hit stumps (36.3), no bat (36.4).",
+    "expected_citations": ["36.1", "36.2", "36.3", "36.4"],
+    "expected_verdict": "OUT",
+    "format": "all"
+  },
+  {
+    "id": "lbw-003",
+    "category": "lbw",
+    "difficulty": "medium",
+    "query": "Ball pitched on off stump, hit the bat first then pad, in front of stumps, would hit leg stump. What is the decision?",
+    "expected_answer": "NOT OUT — ball hit the bat before the pad. Per Law 36.4, if the ball makes contact with the bat before the pad, the batter cannot be out LBW.",
+    "expected_citations": ["36.4"],
+    "expected_verdict": "NOT OUT",
+    "format": "all"
+  },
+  {
+    "id": "lbw-004",
+    "category": "lbw",
+    "difficulty": "hard",
+    "query": "In a Test match, ball pitched outside off, batter offered no shot, impact outside off, would hit off stump. What is the decision?",
+    "expected_answer": "OUT — even though impact was outside off, the batter offered no shot. Per Law 36.2, the 'no shot' exception means impact outside off can still result in an LBW decision.",
+    "expected_citations": ["36.1", "36.2"],
+    "expected_verdict": "OUT",
+    "format": "test"
+  },
+  {
+    "id": "drs-001",
+    "category": "drs",
+    "difficulty": "easy",
+    "query": "What is umpire's call in DRS?",
+    "expected_answer": "Umpire's call is when ball-tracking shows the ball clipping the bails or the impact/line is too marginal to overturn. The on-field umpire's decision stands. It does not cost a review.",
+    "expected_citations": ["25.3"],
+    "expected_verdict": null,
+    "format": "all"
+  },
+  {
+    "id": "drs-002",
+    "category": "drs",
+    "difficulty": "medium",
+    "query": "Can DRS overturn umpire's call on height?",
+    "expected_answer": "No. Umpire's call on height cannot be overturned. The on-field decision stands regardless of ball-tracking when the margin is within umpire's call parameters.",
+    "expected_citations": ["25.3"],
+    "expected_verdict": null,
+    "format": "all"
+  },
+  {
+    "id": "no-ball-001",
+    "category": "no_ball",
+    "difficulty": "easy",
+    "query": "What happens when a bowler oversteps?",
+    "expected_answer": "The delivery is called a no-ball. The batting side gets one extra run, and the next delivery is a free hit (in limited-overs cricket). The no-ball also counts as one of the six deliveries in the over.",
+    "expected_citations": ["24.1", "24.5"],
+    "expected_verdict": null,
+    "format": "all"
+  },
+  {
+    "id": "wide-001",
+    "category": "wide",
+    "difficulty": "medium",
+    "query": "Under the 2025 trial, what is the new leg-side wide rule?",
+    "expected_answer": "Under the 2025 trial, a protected-area marker line is extended to the popping crease. If the ball passes on the leg side beyond this line, it is called a wide, regardless of the batter's position.",
+    "expected_citations": ["25.1"],
+    "expected_verdict": null,
+    "format": "t20i"
+  },
+  {
+    "id": "catch-001",
+    "category": "boundary_catch",
+    "difficulty": "medium",
+    "query": "Under the 2025 rule change, what happens if a fielder catches the ball but steps over the boundary rope?",
+    "expected_answer": "Under the 2025 rule, the fielder must land AND stay wholly inside the boundary for the catch to be valid. If any part of the fielder touches or goes over the boundary rope at any point while in contact with the ball, the catch is not valid and it is a boundary.",
+    "expected_citations": ["33.2"],
+    "expected_verdict": "six runs",
+    "format": "all"
+  },
+  {
+    "id": "run-out-001",
+    "category": "run_out",
+    "difficulty": "medium",
+    "query": "Batter leaves the crease after the ball is dead, and the fielder breaks the stumps. Is the batter out?",
+    "expected_answer": "No. The ball is dead, so the batter cannot be run out. The run-out law (Law 38) only applies when the ball is in play.",
+    "expected_citations": ["38.1"],
+    "expected_verdict": "NOT OUT",
+    "format": "all"
+  },
+  {
+    "id": "obstructing-001",
+    "category": "obstructing",
+    "difficulty": "hard",
+    "query": "Batter deliberately changes direction while running to block a fielder's throw. Is this obstructing the field?",
+    "expected_answer": "Yes. Per Law 37, a significant change of direction without cause to prevent a run-out is obstructing the field, regardless of intent.",
+    "expected_citations": ["37.1"],
+    "expected_verdict": "OUT",
+    "format": "all"
+  }
+]

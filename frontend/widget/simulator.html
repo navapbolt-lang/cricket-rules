@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CricketGPT — Decision Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #0f172a; color: #fff; min-height: 100vh; }
+
+    /* Nav */
+    .nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .nav .logo { display: flex; align-items: center; gap: 10px; }
+    .nav .logo-icon { font-size: 26px; }
+    .nav .logo-text { font-size: 18px; font-weight: 700; }
+    .nav-links { display: flex; gap: 20px; align-items: center; }
+    .nav-links a { color: #fff; font-size: 13px; opacity: 0.6; text-decoration: none; transition: opacity 0.2s; }
+    .nav-links a:hover, .nav-links a.active { opacity: 1; }
+    .nav-links .try-btn { background: #10b981; opacity: 1 !important; padding: 7px 16px; border-radius: 7px; font-weight: 600; }
+
+    /* Main */
+    .main { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+
+    .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(16,185,129,0.1); color: #10b981; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; margin-bottom: 20px; border: 1px solid rgba(16,185,129,0.2); }
+    h1 { font-size: 36px; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.5px; }
+    h1 span { color: #10b981; }
+    .subtitle { font-size: 15px; color: #94a3b8; margin-bottom: 36px; line-height: 1.6; }
+
+    /* Scenario Cards */
+    .scenarios-label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .scenario-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 32px; }
+    .scenario-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .scenario-card:hover { background: rgba(16,185,129,0.08); border-color: #10b981; }
+    .scenario-card.active { background: rgba(16,185,129,0.12); border-color: #10b981; }
+    .scenario-card .icon { font-size: 28px; margin-bottom: 6px; }
+    .scenario-card .name { font-size: 12px; font-weight: 600; }
+    .scenario-card .law { font-size: 10px; color: #64748b; margin-top: 2px; }
+
+    /* Input Area */
+    .input-section { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; margin-bottom: 28px; }
+    .input-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+    .input-row { display: flex; gap: 10px; }
+    .input-row textarea { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 14px; color: #fff; font-size: 13.5px; font-family: inherit; resize: vertical; min-height: 80px; outline: none; transition: border-color 0.2s; }
+    .input-row textarea:focus { border-color: #10b981; }
+    .input-row textarea::placeholder { color: #64748b; }
+    .run-btn { background: #10b981; color: #fff; border: none; padding: 12px 28px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; align-self: flex-end; white-space: nowrap; }
+    .run-btn:hover { background: #059669; transform: translateY(-1px); }
+    .run-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+    /* Example prompts */
+    .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .example-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 5px 12px; font-size: 11.5px; color: #94a3b8; cursor: pointer; transition: all 0.15s; }
+    .example-btn:hover { background: rgba(16,185,129,0.1); border-color: #10b981; color: #10b981; }
+
+    /* Results */
+    .results { display: none; }
+    .results.visible { display: block; }
+
+    .verdict-card { background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.04)); border: 1px solid rgba(16,185,129,0.3); border-radius: 14px; padding: 24px; margin-bottom: 20px; text-align: center; }
+    .verdict-label { font-size: 12px; font-weight: 600; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .verdict-text { font-size: 32px; font-weight: 800; }
+    .verdict-text.out { color: #ef4444; }
+    .verdict-text.not-out { color: #10b981; }
+
+    .conditions-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+    .conditions-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    .condition-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .condition-item:last-child { border-bottom: none; }
+    .condition-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .condition-num.pass { background: rgba(16,185,129,0.15); color: #10b981; }
+    .condition-num.fail { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .condition-num.pending { background: rgba(148,163,184,0.15); color: #94a3b8; }
+    .condition-body { flex: 1; }
+    .condition-desc { font-size: 13px; color: #e2e8f0; line-height: 1.5; }
+    .condition-law { font-size: 11px; color: #64748b; margin-top: 3px; }
+    .condition-result { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; align-self: center; }
+    .condition-result.pass { background: rgba(16,185,129,0.15); color: #10b981; }
+    .condition-result.fail { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+    .explanation-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+    .explanation-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+    .explanation-card p { font-size: 13.5px; color: #cbd5e1; line-height: 1.6; }
+
+    .stats-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; }
+    .stats-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: #10b981; }
+    .stats-card p { font-size: 13px; color: #94a3b8; line-height: 1.6; }
+
+    /* Typing */
+    .typing-indicator { display: none; text-align: center; padding: 20px; }
+    .typing-indicator.visible { display: block; }
+    .typing-dots { display: inline-flex; gap: 5px; }
+    .typing-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: bounce 1.4s ease-in-out both; }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+    @media (max-width: 768px) {
+      .scenario-grid { grid-template-columns: repeat(2, 1fr); }
+      h1 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="logo">
+      <span class="logo-icon">🏏</span>
+      <span class="logo-text">CricketGPT</span>
+    </div>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/demo/live">Chat</a>
+      <a href="/simulator" class="active">Simulator</a>
+      <a href="/docs">API</a>
+      <a href="/demo/live" class="try-btn">Try Demo</a>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="hero-badge">⚖️ Interactive Decision Analysis</div>
+    <h1>Decision <span>Simulator</span></h1>
+    <p class="subtitle">Describe a cricket incident and watch the law conditions evaluated step-by-step. See exactly why a decision is OUT or NOT OUT.</p>
+
+    <div class="scenarios-label">Quick Start — Pick a Scenario</div>
+    <div class="scenario-grid">
+      <div class="scenario-card" data-type="lbw" onclick="selectScenario('lbw')">
+        <div class="icon">🎯</div>
+        <div class="name">LBW</div>
+        <div class="law">Law 36</div>
+      </div>
+      <div class="scenario-card" data-type="run_out" onclick="selectScenario('run_out')">
+        <div class="icon">🏃</div>
+        <div class="name">Run Out</div>
+        <div class="law">Law 38</div>
+      </div>
+      <div class="scenario-card" data-type="stumping" onclick="selectScenario('stumping')">
+        <div class="icon">🧤</div>
+        <div class="name">Stumping</div>
+        <div class="law">Law 39</div>
+      </div>
+      <div class="scenario-card" data-type="timed_out" onclick="selectScenario('timed_out')">
+        <div class="icon">⏱️</div>
+        <div class="name">Timed Out</div>
+        <div class="law">Law 40</div>
+      </div>
+      <div class="scenario-card" data-type="no_ball" onclick="selectScenario('no_ball')">
+        <div class="icon">🚫</div>
+        <div class="name">No Ball</div>
+        <div class="law">Law 24</div>
+      </div>
+      <div class="scenario-card" data-type="wide" onclick="selectScenario('wide')">
+        <div class="icon">↔️</div>
+        <div class="name">Wide</div>
+        <div class="law">Law 25</div>
+      </div>
+      <div class="scenario-card" data-type="hit_wicket" onclick="selectScenario('hit_wicket')">
+        <div class="icon">💥</div>
+        <div class="name">Hit Wicket</div>
+        <div class="law">Law 35</div>
+      </div>
+      <div class="scenario-card" data-type="boundary_catch" onclick="selectScenario('boundary_catch')">
+        <div class="icon"> boundary</div>
+        <div class="name">Boundary Catch</div>
+        <div class="law">Law 33</div>
+      </div>
+    </div>
+
+    <div class="input-section">
+      <h3>Describe the Incident</h3>
+      <div class="input-row">
+        <textarea id="scenario-input" placeholder="e.g. Ball pitched outside leg stump, struck the batter in front of off stump, would have hit the stumps..."></textarea>
+        <button class="run-btn" id="run-btn" onclick="runSimulation()">Analyze ⚡</button>
+      </div>
+      <div class="examples" id="example-prompts"></div>
+    </div>
+
+    <div class="typing-indicator" id="typing">
+      <div class="typing-dots">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+      </div>
+      <p style="margin-top:8px;font-size:12px;color:#64748b;">Analyzing conditions...</p>
+    </div>
+
+    <div class="results" id="results">
+      <div class="verdict-card" id="verdict-card">
+        <div class="verdict-label">Verdict</div>
+        <div class="verdict-text" id="verdict-text"></div>
+      </div>
+
+      <div class="conditions-card">
+        <div class="conditions-title">📋 Condition Checklist</div>
+        <div id="conditions-list"></div>
+      </div>
+
+      <div class="explanation-card">
+        <h3>📖 Explanation</h3>
+        <p id="explanation-text"></p>
+      </div>
+
+      <div class="stats-card" id="stats-card" style="display:none;">
+        <h3>🏏 Notable Records</h3>
+        <p id="stats-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin + '/api/v1';
+    let selectedScenario = 'lbw';
+
+    const EXAMPLES = {
+      lbw: [
+        'Ball pitched outside leg, hit in front of off stump, would have hit the stumps, no bat involved',
+        'Ball pitched on off stump, impact in line, clipping leg stump, bat and pad together',
+        'Ball pitched outside off, batter offered no shot, impact in line, going on to hit middle',
+      ],
+      run_out: [
+        'Batter diving for crease, direct hit from fielder, bat in air above the line',
+        'Batter home, fielder breaks stumps, but ball deflected from keeper\'s gloves',
+        'Backup fielder throws, ball hits running batter\'s bat, goes to stumps',
+      ],
+      stumping: [
+        'Batter advancing down the track, misses the ball, keeper whips bails off, back foot in air',
+        'Batter lunges forward, edge caught by keeper, both feet behind crease',
+        'Batter steps out, bowler delivers no-ball, keeper stumps — is it out?',
+      ],
+      timed_out: [
+        'New batter takes 4 minutes to reach the crease, fielding team appeals',
+        'Batter injured, physio on field, 3 minutes elapsed before new batter ready',
+        'Rain delay, batter walking slowly, umpire calls time before batter arrives',
+      ],
+      no_ball: [
+        'Bowler\'s front foot lands 1cm behind the popping crease',
+        'Bowler overstepping, no part of front foot behind the line',
+        'Bowler delivers waist-high full toss, batter ducks',
+      ],
+      wide: [
+        'Ball sails over batter\'s head on leg side, batter ducks',
+        'Bouncer goes wide of off stump, batter leaves it',
+        'Full delivery down leg side, flicks batter\'s thigh pad',
+      ],
+      hit_wicket: [
+        'Batter swings, back foot dislodges bails during follow-through',
+        'Batter sets off for run, trips and knocks bails off with bat',
+        'Batter ducks a bouncer, helmet hits the stumps',
+      ],
+      boundary_catch: [
+        'Fielder catches ball, momentum carries him over boundary, throws ball back in before crossing',
+        'Fielder catches, one foot on rope, other in air, throws back and re-enters',
+        'Fielder catches near rope, steps on boundary cushion, maintains control',
+      ],
+    };
+
+    const SCENARIO_QUERIES = {
+      lbw: 'lbw analysis',
+      run_out: 'run out analysis',
+      stumping: 'stumping analysis',
+      timed_out: 'timed out analysis',
+      no_ball: 'no ball analysis',
+      wide: 'wide ball analysis',
+      hit_wicket: 'hit wicket analysis',
+      boundary_catch: 'boundary catch analysis',
+    };
+
+    function selectScenario(type) {
+      selectedScenario = type;
+      document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+      document.querySelector(`[data-type="${type}"]`).classList.add('active');
+
+      const examples = EXAMPLES[type] || [];
+      const container = document.getElementById('example-prompts');
+      container.innerHTML = examples.map(e =>
+        `<button class="example-btn" onclick="useExample('${e.replace(/'/g, "\\'")}')">${e.substring(0, 60)}...</button>`
+      ).join('');
+    }
+
+    function useExample(text) {
+      document.getElementById('scenario-input').value = text;
+    }
+
+    async function runSimulation() {
+      const input = document.getElementById('scenario-input').value.trim();
+      if (!input) return;
+
+      const btn = document.getElementById('run-btn');
+      const typing = document.getElementById('typing');
+      const results = document.getElementById('results');
+
+      btn.disabled = true;
+      btn.textContent = 'Analyzing...';
+      typing.classList.add('visible');
+      results.classList.remove('visible');
+
+      const query = `${SCENARIO_QUERIES[selectedScenario] || 'cricket scenario analysis'}: ${input}`;
+
+      try {
+        const response = await fetch(API_BASE + '/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-API-Key': 'test-key' },
+          body: JSON.stringify({ query, web_search: document.getElementById('web-search-toggle')?.checked ?? true }),
+        });
+
+        if (!response.ok) throw new Error('Request failed');
+        const data = await response.json();
+
+        displayResults(data);
+      } catch (err) {
+        document.getElementById('verdict-text').textContent = 'Error analyzing scenario';
+        document.getElementById('verdict-text').className = 'verdict-text';
+        document.getElementById('conditions-list').innerHTML = '<p style="color:#94a3b8;font-size:13px;">Failed to analyze. Please try again.</p>';
+        document.getElementById('explanation-text').textContent = '';
+        results.classList.add('visible');
+      } finally {
+        typing.classList.remove('visible');
+        btn.disabled = false;
+        btn.textContent = 'Analyze ⚡';
+      }
+    }
+
+    function displayResults(data) {
+      const results = document.getElementById('results');
+      const answer = data.answer || '';
+
+      // Parse verdict
+      const verdictMatch = answer.match(/Verdict:\s*(.+)/i);
+      const verdict = verdictMatch ? verdictMatch[1].trim() : 'Unable to determine';
+      const verdictText = document.getElementById('verdict-text');
+      verdictText.textContent = verdict.toUpperCase();
+      verdictText.className = 'verdict-text ' + (verdict.toLowerCase().includes('out') ? 'out' : 'not-out');
+
+      // Parse conditions from answer
+      const conditionMatches = [...answer.matchAll(/(\d+)\.\s*(.+?)(?:Fail|Pass|PASS|FAIL)/gi)];
+      const conditionsList = document.getElementById('conditions-list');
+
+      if (conditionMatches.length > 0) {
+        conditionsList.innerHTML = conditionMatches.map((m, i) => {
+          const num = m[1];
+          const desc = m[2].trim();
+          const passed = m[0].toLowerCase().includes('pass');
+          return `
+            <div class="condition-item">
+              <div class="condition-num ${passed ? 'pass' : 'fail'}">${num}</div>
+              <div class="condition-body">
+                <div class="condition-desc">${desc}</div>
+                <div class="condition-law">Law citation in response</div>
+              </div>
+              <span class="condition-result ${passed ? 'pass' : 'fail'}">${passed ? 'PASS' : 'FAIL'}</span>
+            </div>`;
+        }).join('');
+      } else {
+        // Fallback: show full answer as explanation
+        conditionsList.innerHTML = '<p style="color:#94a3b8;font-size:13px;">Conditions parsed from full response below.</p>';
+      }
+
+      // Explanation
+      const explMatch = answer.match(/Explanation:\s*(.+?)(?=Format|Notable|$)/is);
+      document.getElementById('explanation-text').textContent = explMatch ? explMatch[1].trim() : answer;
+
+      // Stats
+      const notableMatch = answer.match(/Notable:\s*(.+)/i);
+      const statsCard = document.getElementById('stats-card');
+      if (notableMatch) {
+        document.getElementById('stats-text').textContent = notableMatch[1].trim();
+        statsCard.style.display = 'block';
+      } else {
+        statsCard.style.display = 'none';
+      }
+
+      results.classList.add('visible');
+    }
+
+    // Initialize with LBW selected
+    selectScenario('lbw');
+  </script>
+
+</body>
+</html>
