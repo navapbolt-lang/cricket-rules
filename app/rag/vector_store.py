@@ -3,33 +3,38 @@
 import uuid
 from app.config import settings
 from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance, PointStruct, Filter, FieldCondition, MatchValue, PayloadSchemaType
+from qdrant_client.models import (
+    VectorParams,
+    Distance,
+    PointStruct,
+    Filter,
+    FieldCondition,
+    MatchValue,
+    PayloadSchemaType,
+)
 from app.models.types import LawChunk
 
 
 COLLECTION_NAME = "icc_laws"
-VECTOR_SIZE = 384  # all-MiniLM-L6-v2 embedding dimension
+VECTOR_SIZE = 768  # Gemini text-embedding-004 dimension
 
 
 class VectorStore:
     """Qdrant vector store wrapper."""
-    
+
     def __init__(self):
         self.client = QdrantClient(
             url=settings.qdrant_url,
             api_key=settings.qdrant_api_key or None,
         )
         self._ensure_collection()
-        
+
     def _ensure_collection(self):
         """Create Qdrant collection and create payload indexes if it does not exist."""
         if not self.client.collection_exists(COLLECTION_NAME):
             self.client.create_collection(
                 collection_name=COLLECTION_NAME,
-                vectors_config=VectorParams(
-                    size=VECTOR_SIZE,
-                    distance=Distance.COSINE
-                )
+                vectors_config=VectorParams(size=VECTOR_SIZE, distance=Distance.COSINE),
             )
             # Create payload index for gender filter
             self.client.create_payload_index(
@@ -37,7 +42,7 @@ class VectorStore:
                 field_name="metadata.gender",
                 field_schema=PayloadSchemaType.KEYWORD,
             )
-    
+
     def upsert(self, chunks: list[LawChunk]) -> int:
         """Upsert chunks with embeddings and metadata."""
         points = []
@@ -57,14 +62,16 @@ class VectorStore:
         if points:
             self.client.upsert(collection_name=COLLECTION_NAME, points=points)
         return len(points)
-    
+
     def delete_by_law(self, law_number: str):
         """Remove old version of a law."""
         self.client.delete(
             collection_name=COLLECTION_NAME,
             points_selector=Filter(
                 must=[
-                    FieldCondition(key="metadata.law_number", match=MatchValue(value=law_number))
+                    FieldCondition(
+                        key="metadata.law_number", match=MatchValue(value=law_number)
+                    )
                 ]
             ),
         )
@@ -75,12 +82,14 @@ class VectorStore:
             collection_name=COLLECTION_NAME,
             points_selector=Filter(
                 must=[
-                    FieldCondition(key="metadata.authority", match=MatchValue(value=authority)),
+                    FieldCondition(
+                        key="metadata.authority", match=MatchValue(value=authority)
+                    ),
                     FieldCondition(key="metadata.year", match=MatchValue(value=year)),
                 ]
             ),
         )
-    
+
     def count(self) -> int:
         """Return chunk count in the collection."""
         try:
